@@ -2,10 +2,13 @@ import telebot
 import sqlite3
 
 from telebot import types
+from config import bot
 
-token = '6251500867:AAFdyLsSsyA6b7eAGZXPyPKmkYzju42EJ2U'
-bot = telebot.TeleBot(token)
+db = sqlite3.connect('users.db')
+cursor = db.cursor()
 
+
+# cursor.execute()
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
