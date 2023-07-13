@@ -3,9 +3,9 @@ import sqlite3
 
 from telebot import types
 from config import bot
+from db import BotDatabase
 
-db = sqlite3.connect('users.db')
-cursor = db.cursor()
+bot_db = BotDatabase('wishlist.db')
 
 
 # cursor.execute()
@@ -21,7 +21,7 @@ def start_message(message):
     new_wishlist = types.KeyboardButton('Create new wishlist')
     existing_wishlist = types.KeyboardButton('Open existing wishlist')
     markup.add(new_wishlist, existing_wishlist)
-    bot.send_message(message.chat.id, 'Choose what you want to do:', reply_markup=markup)
+    bot.send_message(message.chat.id, 'What you want to do?', reply_markup=markup)
 
 
 @bot.message_handler(content_types=['text'])
@@ -29,7 +29,7 @@ def handler(message):
     if message.text == "Create new wishlist":
         bot.send_message(message.chat.id, 'Creating...')
     elif message.text == "Open existing wishlist":
-        bot.send_message(message.chat.id, 'One second, please...')
+        bot.send_message(message.chat.id, 'One moment, please...')
 
 
 bot.infinity_polling()
