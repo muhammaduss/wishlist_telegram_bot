@@ -27,6 +27,24 @@ def start_message(message):
                                       '/commands - to see a list of commands for operating with wishlists')
 
 
+# Handling with /new_wishlist command
+@bot.message_handler(commands=['new_wishlist'])
+def new_wishlist_command(message):
+    bot.send_message(message.chat.id, 'Write name of your wishlist which you want to create:')
+    message_for_user = 'Creating...'
+    operation = 'new_wishlist'
+    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
+
+
+# Handling with /open_wishlist command
+@bot.message_handler(commands=['open_wishlist'])
+def open_wishlist_command(message):
+    bot.send_message(message.chat.id, 'Write wishlist name:')
+    operation = 'open_wishlist'
+    message_for_user = 'One moment, please...'
+    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
+
+
 # Handling with /add_item command
 @bot.message_handler(commands=['add_item'])
 def add_item_command(message):
@@ -34,19 +52,6 @@ def add_item_command(message):
     message_for_user = 'Write item which you want to add to chosen topic:'
     operation = 'add'
     bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
-
-
-# Handling with /all_wishlists command (showing for user all his existing wishlists)
-@bot.message_handler(commands=['all_wishlists'])
-def all_wishlists_command(message):
-    chat_id = message.chat.id
-    cursor.execute("SELECT DISTINCT topic FROM wishlists WHERE chat_id=?", (chat_id,))
-    topics = cursor.fetchall()
-    response = "List of all your wishlists:\n"
-    for topic in topics:
-        response += f"-{topic[0]}\n"
-    bot.send_message(message.chat.id, response)
-    bot.send_message(message.chat.id, "Use /commands to see all available actions with your wishlists")
 
 
 # Handling with /delete_item command
@@ -67,22 +72,23 @@ def delete_wishlist_command(message):
     bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
 
 
-# Handling with /open_wishlist command
-@bot.message_handler(commands=['open_wishlist'])
-def open_wishlist_command(message):
-    bot.send_message(message.chat.id, 'Write wishlist name:')
-    operation = 'open_wishlist'
-    message_for_user = 'One moment, please...'
-    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
+# Handling with /all_wishlists command (showing for user all his existing wishlists)
+@bot.message_handler(commands=['all_wishlists'])
+def all_wishlists_command(message):
+    # Selecting distinct (different) topics from db by user chat id
+    chat_id = message.chat.id
+    cursor.execute("SELECT DISTINCT topic FROM wishlists WHERE chat_id=?", (chat_id,))
+    topics = cursor.fetchall()
 
-
-# Handling with /new_wishlist command
-@bot.message_handler(commands=['new_wishlist'])
-def new_wishlist_command(message):
-    bot.send_message(message.chat.id, 'Write name of your wishlist which you want to create:')
-    message_for_user = 'Creating...'
-    operation = 'new_wishlist'
-    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
+    # Show them as a list
+    response = "List of all your wishlists:\n\n"
+    if len(topics) == 0:
+        response += 'no wishlists'
+    else:
+        for topic in topics:
+            response += f"-{topic[0]}\n"
+    bot.send_message(message.chat.id, response)
+    bot.send_message(message.chat.id, "Use /commands to see all available actions with your wishlists")
 
 
 # Handling with /commands
@@ -113,7 +119,8 @@ def get_topic_name(message, message_for_user, operation):
         # If there is no such topic related to user - output message about it, else list all items in user's topic name
         if len(items) == 0:
             bot.send_message(message.chat.id, "Sorry, seems like you don't have such wishlist, please rewrite or "
-                                              "create wishlist with chosen topic using /new_wishlist")
+                                              "create wishlist with chosen topic using /new_wishlist or go to "
+                                              "/commands for see available actions")
         else:
             # We get operation value from command handlers, so we know which function we should call
             if operation == 'add':
@@ -133,11 +140,14 @@ def open_existing_wishlist(message, topic):
     cursor.execute("SELECT * FROM wishlists WHERE chat_id = ? AND topic = ?", (chat_id, topic))
     items = cursor.fetchall()
 
-    # If there is no such topic related to user - output message about it, else list all items in user's topic name
-    response = f"Topic: {topic}\n"
-    for item in items:
-        if item[2] is not None and item[3] is not None:
-            response += f"{item[3]}. {item[2]}\n"
+    # List all items for user in this chosen topic
+    response = f"Topic: {topic}\n\n"
+    if len(items) == 1:
+        response += "no items"
+    else:
+        for item in items:
+            if item[2] is not None and item[3] is not None:
+                response += f"{item[3]}. {item[2]}\n"
 
     bot.send_message(message.chat.id, response)
     bot.send_message(message.chat.id, "Use /commands to see all available commands")
@@ -166,7 +176,8 @@ def add_item(message, topic):
     chat_id = message.chat.id
     item = message.text
 
-    # There is some feature: numerating items, so user in future can easily delete them, without typing whole item name
+    # There is some feature: numerating items by counting all existing items in given topic and chat id, so user
+    # in future can easily delete them, without typing whole item name
     cursor.execute("SELECT * FROM wishlists WHERE `chat_id` = ? AND `topic` = ?", (chat_id, topic))
     item_number = len(cursor.fetchall())
     cursor.execute("INSERT INTO wishlists VALUES (?, ?, ?, ?)", (chat_id, topic, item, item_number))
