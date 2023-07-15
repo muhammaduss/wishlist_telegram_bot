@@ -13,7 +13,6 @@ connection.commit()
 @bot.message_handler(commands=['start'])
 def start_message(message):
     # Greeting of user
-
     greeting = f'Hello, {message.from_user.first_name}!'
     bot.send_message(message.chat.id, greeting)
 
@@ -74,19 +73,29 @@ def commands_command(message):
 
 # Here we get topic name from user and use it for operating with database in further functions
 def get_topic_name(message, message_for_user, operation):
+    chat_id = message.chat.id
     topic = message.text
     bot.send_message(message.chat.id, message_for_user)
 
-    # We get operation value from command handlers, so we know which function we should call
-
-    if operation == 'add':
-        bot.register_next_step_handler(message, add_item, topic)
-    elif operation == 'open_wishlist':
-        open_existing_wishlist(message, topic)
-    elif operation == 'new_wishlist':
+    if operation == 'new_wishlist':
         create_new_wishlist(message, topic)
     else:
-        bot.register_next_step_handler(message, delete_item, topic)
+        # Check for topic existence in db
+        cursor.execute("SELECT * FROM wishlists WHERE chat_id = ? AND topic = ?", (chat_id, topic))
+        items = cursor.fetchall()
+
+        # If there is no such topic related to user - output message about it, else list all items in user's topic name
+        if len(items) == 0:
+            bot.send_message(message.chat.id, "Sorry, seems like you don't have such wishlist, please rewrite or "
+                                              "create wishlist with chosen topic using /new_wishlist")
+        else:
+            # We get operation value from command handlers, so we know which function we should call
+            if operation == 'add':
+                bot.register_next_step_handler(message, add_item, topic)
+            elif operation == 'open_wishlist':
+                open_existing_wishlist(message, topic)
+            else:
+                bot.register_next_step_handler(message, delete_item, topic)
 
 
 # Function for showing wishlist with chosen topic to user
@@ -97,17 +106,13 @@ def open_existing_wishlist(message, topic):
     items = cursor.fetchall()
 
     # If there is no such topic related to user - output message about it, else list all items in user's topic name
-    if len(items) == 0:
-        bot.send_message(message.chat.id, "Sorry, seems like you don't have such wishlist, please rewrite or "
-                                          "create wishlist with chosen topic using /new_wishlist")
-    else:
-        response = f"Topic: {topic}\n"
-        for item in items:
-            if item[2] is not None and item[3] is not None:
-                response += f"{item[3]}. {item[2]}\n"
+    response = f"Topic: {topic}\n"
+    for item in items:
+        if item[2] is not None and item[3] is not None:
+            response += f"{item[3]}. {item[2]}\n"
 
-        bot.send_message(message.chat.id, response)
-        bot.send_message(message.chat.id, "Use /commands to see all available commands")
+    bot.send_message(message.chat.id, response)
+    bot.send_message(message.chat.id, "Use /commands to see all available commands")
 
 
 # Function for creating a new wishlist with given topic and user chat id
