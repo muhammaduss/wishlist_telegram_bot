@@ -6,6 +6,7 @@ connection = sqlite3.connect('wishlists.db', check_same_thread=False)
 cursor = connection.cursor()
 
 cursor.execute("CREATE TABLE IF NOT EXISTS wishlists (chat_id INTEGER, topic TEXT, item TEXT, item_number INTEGER)")
+connection.commit()
 
 
 @bot.message_handler(commands=['start'])
@@ -65,6 +66,21 @@ def get_topic_name(message, message_for_user, operation):
 
 def open_existing_wishlist(message, topic):
     chat_id = message.chat.id
+    cursor.execute("SELECT * FROM wishlists WHERE chat_id = ? AND topic = ?", (chat_id, topic))
+    items = cursor.fetchall()
+    if len(items) == 0:
+        bot.send_message(message.chat.id, "Sorry, seems like you don't have such wishlist, please rewrite or "
+                                          "create wishlist with this topic as a /new_wishlist")
+    elif len(items) == 1:
+        bot.send_message(message.chat.id, "Success! But your wishlist is empty.\n "
+                                          "You can add items to it, using /add command")
+    else:
+        response = "Here are the items in your wishlist:\n"
+        for item in items:
+            if item[2] is not None and item[3] is not None:
+                response += f"{item[3]}. {item[2]}\n"
+
+        bot.send_message(message.chat.id, response)
 
 
 def create_new_wishlist(message, topic):
