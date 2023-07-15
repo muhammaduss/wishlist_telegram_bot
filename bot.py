@@ -1,6 +1,5 @@
 import sqlite3
 
-from telebot import types
 from config import bot
 
 connection = sqlite3.connect('wishlists.db', check_same_thread=False)
@@ -15,16 +14,12 @@ def start_message(message):
     greeting = f'Hello, {message.from_user.first_name}!'
     bot.send_message(message.chat.id, greeting)
 
-    # Showing buttons
-    markup = types.ReplyKeyboardMarkup()
-    new_wishlist = types.KeyboardButton('Create new wishlist')
-    existing_wishlist = types.KeyboardButton('Open existing wishlist')
-    markup.add(new_wishlist, existing_wishlist)
-    bot.send_message(message.chat.id, 'What you want to do?', reply_markup=markup)
+    # TODO: write list of commands
+    bot.send_message(message.chat.id, 'What you want to do?')
 
 
 @bot.message_handler(commands=['add'])
-def add(message):
+def add_command(message):
     bot.send_message(message.chat.id, 'Write topic name:')
     message_for_user = 'Write item which you want to add to chosen topic:'
     operation = 'add'
@@ -32,30 +27,27 @@ def add(message):
 
 
 @bot.message_handler(commands=['delete'])
-def delete(message):
+def delete_command(message):
     bot.send_message(message.chat.id, 'Write topic name:')
     message_for_user = 'Write number of item which you want to delete from chosen topic:'
     operation = 'delete'
     bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
 
 
-@bot.message_handler(content_types=['text'])
-def handler(message):
-    if message.text == "Create new wishlist":
-        bot.send_message(message.chat.id, 'Write name of your wishlist:', reply_markup=types.ReplyKeyboardRemove())
-
-        bot.register_next_step_handler(message, create_new_wishlist)
-    elif message.text == "Open existing wishlist":
-        bot.send_message(message.chat.id, 'One moment, please...')
+@bot.message_handler(commands=['open_wishlist'])
+def open_wishlist_command(message):
+    bot.send_message(message.chat.id, 'Write topic name:')
+    operation = 'open_wishlist'
+    message_for_user = 'One moment, please...'
+    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
 
 
-def create_new_wishlist(message):
-    chat_id = message.chat.id
-    topic = message.text
-    cursor.execute("INSERT INTO wishlists VALUES (?, ?, NULL, NULL)", (chat_id, topic))
-    connection.commit()
-    bot.send_message(message.chat.id, 'Congratulations, your wishlist has been added! Now you can add items or delete'
-                                      ' them using this commands: /add and /delete ')
+@bot.message_handler(commands=['new_wishlist'])
+def new_wishlist_command(message):
+    bot.send_message(message.chat.id, 'Write name of your wishlist which you want to create:')
+    message_for_user = 'Creating...'
+    operation = 'new_wishlist'
+    bot.register_next_step_handler(message, get_topic_name, message_for_user, operation)
 
 
 def get_topic_name(message, message_for_user, operation):
@@ -63,8 +55,24 @@ def get_topic_name(message, message_for_user, operation):
     bot.send_message(message.chat.id, message_for_user)
     if operation == 'add':
         bot.register_next_step_handler(message, add_item, topic)
+    elif operation == 'open_wishlist':
+        open_existing_wishlist(message, topic)
+    elif operation == 'new_wishlist':
+        create_new_wishlist(message, topic)
     else:
         bot.register_next_step_handler(message, delete_item, topic)
+
+
+def open_existing_wishlist(message, topic):
+    chat_id = message.chat.id
+
+
+def create_new_wishlist(message, topic):
+    chat_id = message.chat.id
+    cursor.execute("INSERT INTO wishlists VALUES (?, ?, NULL, NULL)", (chat_id, topic))
+    connection.commit()
+    bot.send_message(message.chat.id, 'Congratulations, your wishlist has been added! Now you can add items or delete'
+                                      ' them using this commands: /add and /delete ')
 
 
 def add_item(message, topic):
