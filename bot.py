@@ -1,6 +1,6 @@
 import sqlite3
 
-from config import bot
+from config_local import bot
 
 connection = sqlite3.connect('wishlists.db', check_same_thread=False)
 cursor = connection.cursor()
