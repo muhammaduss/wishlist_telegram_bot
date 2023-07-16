@@ -37,6 +37,6 @@ Here bot commands:
 
 ```/delete_wishlist``` - delete chosen wishlist
 
-```/all_wishlist``` - show all existing wishlists
+```/all_wishlists``` - show all existing wishlists
 
 ```/commands``` - list of commands for operating with wishlists
