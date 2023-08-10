@@ -6,9 +6,7 @@ Bot for creating and storing wishlists
 
 For personal use go to https://t.me/wishlist_organizer_bot. All instructions for commands are available here.
 
-As usual (from 8-9 AM to 11-12 PM) it will be open,
-but when the laptop is charging, on which the bot is hosted - it will be stopped for maximum 1.5 hours. In such unlucky
-case, write to https://t.me/muhammaduss any time.
+As usual it will be closen, but if you want to use, write to https://t.me/muhammaduss any time and I will try to plug long-term support of this bot.
 
 ### Installation
 
