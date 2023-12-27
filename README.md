@@ -4,9 +4,7 @@ Bot for creating and storing wishlists
 
 ## Getting started
 
-For personal use go to https://t.me/wishlist_organizer_bot. All instructions for commands are available here.
-
-As usual it will be closen, but if you want to use, write to https://t.me/muhammaduss any time and I will try to plug long-term support of this bot.
+For personal use go to https://t.me/wishlist_organizer_bot. All instructions for commands are available here. 
 
 ### Installation
 
